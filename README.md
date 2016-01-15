@@ -1,2 +1,2 @@
-# advanced-csharp
+# Advanced C#
 Code examples of advanced C#
