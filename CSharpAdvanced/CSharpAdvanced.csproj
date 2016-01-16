@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncAwait.cs" />
+    <Compile Include="AsyncAwaitTheory.cs" />
     <Compile Include="ConstructorTypes.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Events.cs" />
