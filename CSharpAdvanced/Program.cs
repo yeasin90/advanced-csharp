@@ -10,6 +10,7 @@ namespace CSharpAdvanced
     {
         static void Main(string[] args)
         {
+            
             Delegates delegates = new Delegates();
             delegates.Invoke1();
             delegates.Invoke2();
