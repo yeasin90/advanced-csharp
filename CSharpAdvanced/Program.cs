@@ -12,6 +12,12 @@ namespace CSharpAdvanced
         {
             Parent cls = new Child();
             cls.Fun();
+            
+            Delegates delegates = new Delegates();
+            delegates.Invoke1();
+            delegates.Invoke2();
+            delegates.Invoke3();
+            delegates.Invoke4();
 
             int x = 10;
             Console.WriteLine(x);
