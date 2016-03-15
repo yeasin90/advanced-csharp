@@ -21,6 +21,8 @@ namespace CSharpAdvanced
 
             int x = 10;
             Console.WriteLine(x);
+
+
             //Delegates delegates = new Delegates();
             //delegates.Invoke1();
             //delegates.Invoke2();
