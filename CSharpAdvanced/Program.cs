@@ -40,6 +40,9 @@ namespace CSharpAdvanced
             //funcLambda.Invoke2();
             //funcLambda.Invoke3();
             //funcLambda.Invoke4();
+            
+            
+            
         }
     }
 
