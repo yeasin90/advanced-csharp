@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Dynamic;
+using Newtonsoft.Json;
 
 namespace CSharpAdvanced
 {
@@ -95,7 +97,7 @@ namespace CSharpAdvanced
             // Run time type will be string
             // So, in compile time, d will not be string
             // But, in runtime d will be string
-            dynamic d = "Hi there"; 
+            dynamic d = "Hi there";
 
             // Static (compile time) type of s is string
             // Run time type will also be string
@@ -113,12 +115,12 @@ namespace CSharpAdvanced
         public void RuntimeMethodResolution()
         {
             int i = 42;
-            PrintMe(i); // --> PrintMe(int value) static binding
+            CommonMethod.PrintMe(i); // --> PrintMe(int value) static binding
 
             dynamic d;
             Console.WriteLine("Create [i]nt or [d]ouble");
             ConsoleKeyInfo choice = Console.ReadKey(intercept: true);
-            if(choice.Key == ConsoleKey.I)
+            if (choice.Key == ConsoleKey.I)
             {
                 d = 99;
             }
@@ -128,39 +130,15 @@ namespace CSharpAdvanced
             }
             // for d = 99, PrintMe(int) will be called
             // for d = 55.5 PrintMe(dynamic) will be called, because we have long but not double. dynamic will always find the best possible matching 
-            PrintMe(d);
+            CommonMethod.PrintMe(d);
 
             d = long.MaxValue;
             // here, PrintMe(long) will be invoked, because we have an overload for long before dynamic overload
-            PrintMe(d);
+            CommonMethod.PrintMe(d);
 
             d = "Hello";
             // here, PrintMe(dynamic) will be called because no overload for string
-            PrintMe(d);
-        }
-
-        private void PrintMe(int value)
-        {
-            Console.WriteLine($"PrintMe(int) called value: {value}");
-        }
-
-        private void PrintMe(long value)
-        {
-            Console.WriteLine($"PrintMe(long) called value: {value}");
-        }
-
-        private void PrintMe(dynamic value)
-        {
-            Console.WriteLine($"PrintMe(dynamic) called with a {value.GetType()} value: {value}");
-        }
-
-        // But below will cause compile time error
-        // This is because : in C#, structure of both object and dynamic are same
-        // Difference is : dynamic references allows dynamic operations to occur on the object that it points to. 
-        // But if we defince a variable as type object, we are not allowed to perform any dynamic operation on that object. like : we have to do boxing-unboxing for object type
-        private void PrintMe(object value)
-        {
-
+            CommonMethod.PrintMe(d);
         }
 
         public void DynamicVsObject()
@@ -230,6 +208,159 @@ namespace CSharpAdvanced
             // dynamic p = new Person();
             // var x = p.DoStuff(); // RuntimeBinderException
             // Cannot implicitly convert type void to object
+        }
+
+        public void ExpandoObject()
+        {
+            // ExpandoObject is a C# dynamic type
+            // Replace Dictionary with more dynamicity
+            var customer = new Dictionary<string, string>();
+            customer.Add("ID", "42");
+
+
+            dynamic newObj = new ExpandoObject();
+            newObj.ID = "42";
+            newObj.SB = new StringBuilder("a string builder");
+            // ExpandoObject has no Add method like dictionary
+            // But ExpandoObject inherits IDictionary and IEnumerable
+            // So, to get Dictionary behaviours, we have to cast ExpandoObject to Dictionary
+            var temp = (IDictionary<string, object>)newObj;
+            temp.Add("Key3", 123);
+
+
+            // Adding behaviour to ExpandoObject
+            dynamic newObj2 = new ExpandoObject();
+            newObj2.Print = (Action)(() =>
+            {
+                foreach (var item in newObj2)
+                {
+                    Console.WriteLine($"{item.Key} : {item.Value}");
+                }
+            });
+
+            newObj2.Count = (Func<int>)(() =>
+            {
+                var c = (IDictionary<string, object>)newObj2;
+                return c.Count;
+            });
+
+            newObj2.ID = "42";
+            newObj2.SB = new StringBuilder("a string builder");
+
+            newObj2.Print();
+            int count = newObj2.Count();
+        }
+
+        public void RefactorReflectionWithDynamic()
+        {
+            // InvokeMethodUsingReflection
+            StringBuilder sb1 = new StringBuilder();
+            sb1.GetType()
+                .InvokeMember("AppendLine",
+                BindingFlags.InvokeMethod,
+                null,
+                sb1,
+                new object[] { "Hello Reflection!" });
+
+
+            // InvokeMethodUsingDynamic
+            StringBuilder sb2 = new StringBuilder();
+            ((dynamic)sb2).AppendLine("Hello dynamic!");
+        }
+
+        public void UnifiedNumericMethod()
+        {
+            // There is not common interface for numeric type in .NET
+            // So, we hhave to write several overloads for each numeric type : int, double, float, long etc
+            // Here, we will write a single method that can take any numeric type
+            int int1 = 5;
+            int int2 = 2;
+
+            CommonMethod.Add(int1, int2);
+
+            double d1 = 20;
+            double d2 = 30;
+
+            CommonMethod.Add(d1, d2);
+
+            // But below can cause runtime error : 
+            var result = CommonMethod.Add(d1, d2);
+        }
+
+        public class Customer2
+        {
+            public string FirstName { get; set; }
+            public string SecondName { get; set; }
+        }
+
+        public void JsonWithDynamic()
+        {
+            const string CustomerJson = "{'FirstName': 'Sarah','SecondName': 'Smith'}";
+            Customer2 c = JsonConvert.DeserializeObject<Customer2>(CustomerJson);
+
+            var firstName = c.FirstName;
+            var secondName = c.SecondName;
+
+            // With dynamic, no need for a new strongly type model class
+            dynamic c2 = JsonConvert.DeserializeObject(CustomerJson);
+            var firstName2 = c2.FirstName;
+            var secondName2 = c2.SecondName;
+        }
+    }
+
+    static class CommonMethod
+    {
+        public static void PrintMe(int value)
+        {
+            Console.WriteLine($"PrintMe(int) called value: {value}");
+        }
+
+        public static void PrintMe(long value)
+        {
+            Console.WriteLine($"PrintMe(long) called value: {value}");
+        }
+
+        public static void PrintMe(dynamic value)
+        {
+            Console.WriteLine($"PrintMe(dynamic) called with a {value.GetType()} value: {value}");
+        }
+
+        // But below will cause compile time error
+        // This is because : in C#, structure of both object and dynamic are same
+        // Difference is : dynamic references allows dynamic operations to occur on the object that it points to. 
+        // But if we defince a variable as type object, we are not allowed to perform any dynamic operation on that object. like : we have to do boxing-unboxing for object type
+        public static void PrintMe(object value)
+        {
+
+        }
+
+        //public static T Add<T>(T a, T b)
+        //{
+        //    // below line will give error because, + cannot be apply in T
+        //    // on the other hand, we cannot use generic constrain, because, there will be lots of numeric type
+        //    // So, generic solution for making Common numeric method will not work
+        //    return a + b;
+        //}
+
+        // Dynamic Solution
+        public static dynamic Add(dynamic a, dynamic b)
+        {
+            dynamic result = a + b;
+            return result;
+        }
+
+        // Dynamic with generic solution. Type safe
+        public static T Add<T>(T a, T b)
+        {
+            dynamic result = (dynamic)a + b;
+            return result; // With this line, we are relying on implicit cast, which may not always be safe
+        }
+
+        // More safer version with explicit casting
+        public static T Add2<T>(T a, T b)
+        {
+            dynamic result = (dynamic)a + b;
+            return (T)result;
         }
     }
 }
